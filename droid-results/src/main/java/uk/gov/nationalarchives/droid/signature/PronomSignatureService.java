@@ -37,10 +37,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import javax.xml.ws.BindingProvider;
-import javax.xml.ws.Holder;
 
-import org.apache.commons.configuration.event.ConfigurationEvent;
+import jakarta.xml.ws.BindingProvider;
+import jakarta.xml.ws.Holder;
+
+import org.apache.commons.configuration2.event.ConfigurationEvent;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.transport.http.HTTPConduit;
@@ -159,7 +160,7 @@ public class PronomSignatureService implements SignatureUpdateService {
     }
 
     @Override
-    public void configurationChanged(ConfigurationEvent evt) {
+    public void onEvent(ConfigurationEvent evt) {
         final String propertyName = evt.getPropertyName();
         if (propertyName.equals(DroidGlobalProperty.BINARY_UPDATE_URL.getName())) {
             setEndpointUrl((String) evt.getPropertyValue());

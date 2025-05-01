@@ -73,7 +73,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
@@ -904,7 +904,7 @@ public class ProfileForm extends JPanel {
         return String.format(puidUrl, puid);
     }
 
-    private class OutlineMouseAdapter extends MouseAdapter {
+    private final class OutlineMouseAdapter extends MouseAdapter {
         @Override
         public void mouseReleased(MouseEvent e) {
 

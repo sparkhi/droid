@@ -42,8 +42,10 @@ import javax.swing.SwingWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.gov.nationalarchives.droid.export.interfaces.ExportDetails;
 import uk.gov.nationalarchives.droid.export.interfaces.ExportManager;
 import uk.gov.nationalarchives.droid.export.interfaces.ExportOptions;
+import uk.gov.nationalarchives.droid.export.interfaces.ExportOutputOptions;
 import uk.gov.nationalarchives.droid.gui.action.ActionDoneCallback;
 
 /**
@@ -57,10 +59,12 @@ public class ExportAction extends SwingWorker<Void, Integer> {
     private ExportManager exportManager;
     private File destination;
     private ExportOptions options;
+    private ExportOutputOptions outputOptions;
     private String outputEncoding;
     private boolean bom;
     private boolean quoteAllFields;
     private String columnsToWrite;
+    private String exportTemplatePath;
     private List<String> profileIds;
     private ActionDoneCallback<ExportAction> callback;
     
@@ -70,28 +74,6 @@ public class ExportAction extends SwingWorker<Void, Integer> {
      * Default Constructor. 
      */
     public ExportAction() {
-    }
-
-    /**
-     * Parameterized constructor.
-     * @param exportManager The exportmanager to use.
-     * @param destination The destination file.
-     * @param options The output options.
-     * @param outputEncoding The output encoding.
-     * @param bom use the bom flag in the output.
-     * @param quoteAllFields whether to quote all fields in export, or just those that contain commas.
-     * @param columnsToWrite A space separated list of columns to write, or null or empty for all columns.
-     * @param profileIds The ids of the profiles to export.
-     */
-    public ExportAction(ExportManager exportManager, File destination, ExportOptions options, String outputEncoding,
-                        boolean bom, boolean quoteAllFields, String columnsToWrite, List<String> profileIds) {
-        setExportManager(exportManager);
-        setDestination(destination);
-        setExportOptions(options);
-        setOutputEncoding(outputEncoding);
-        setBom(bom);
-        setProfileIds(profileIds);
-        setQuoteAllFields(quoteAllFields);
     }
 
     /**
@@ -122,8 +104,7 @@ public class ExportAction extends SwingWorker<Void, Integer> {
     @Override
     protected Void doInBackground() {
         //TODO: configure columns to write in UI.
-        exportTask = exportManager.exportProfiles(profileIds, destination.getPath(), null, options,
-                outputEncoding, bom, quoteAllFields, columnsToWrite);
+        exportTask = exportManager.exportProfiles(profileIds, destination.getPath(), null, getExportDetails());
         try {
             exportTask.get();
         } catch (InterruptedException e) {
@@ -160,6 +141,14 @@ public class ExportAction extends SwingWorker<Void, Integer> {
      */
     public void setExportOptions(ExportOptions opt) {
         this.options = opt;
+    }
+
+    /**
+     *
+     * @param exportOutputOptions The export output options to use.
+     */
+    public void setExportOutputOptions(ExportOutputOptions exportOutputOptions) {
+        this.outputOptions = exportOutputOptions;
     }
     
     /**
@@ -213,4 +202,29 @@ public class ExportAction extends SwingWorker<Void, Integer> {
     public void setColumnsToWrite(String columnsToWrite) {
         this.columnsToWrite = columnsToWrite;
     }
+
+    /**
+     * Set the absolute path of the export template to the ExportAction.
+     * @param exportTemplatePath absolute path of the export template
+     */
+    public void setExportTemplatePath(String exportTemplatePath) {
+        this.exportTemplatePath = exportTemplatePath;
+    }
+
+    /**
+     *
+     * @return the export details for this export command.
+     */
+    private ExportDetails getExportDetails() {
+        ExportDetails.ExportDetailsBuilder builder = new ExportDetails.ExportDetailsBuilder();
+        return builder.withExportOptions(options)
+                .withExportOutputOptions(outputOptions)
+                .withOutputEncoding(outputEncoding)
+                .withBomFlag(bom)
+                .withQuotingAllFields(quoteAllFields)
+                .withColumnsToWrite(columnsToWrite)
+                .withExportTemplatePath(exportTemplatePath)
+                .build();
+    }
+
 }

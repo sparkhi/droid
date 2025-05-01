@@ -31,8 +31,9 @@
  */
 package uk.gov.nationalarchives.droid.gui;
 
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.io.FileHandler;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.slf4j.Logger;
@@ -43,7 +44,6 @@ import uk.gov.nationalarchives.droid.core.interfaces.resource.ResourceUtils;
 import uk.gov.nationalarchives.droid.core.interfaces.signature.SignatureFileInfo;
 import uk.gov.nationalarchives.droid.core.interfaces.signature.SignatureType;
 import uk.gov.nationalarchives.droid.export.interfaces.ExportOptions;
-import uk.gov.nationalarchives.droid.gui.action.ActionDoneCallback;
 import uk.gov.nationalarchives.droid.gui.action.ActionFactory;
 import uk.gov.nationalarchives.droid.gui.action.AddFilesAndFoldersAction;
 import uk.gov.nationalarchives.droid.gui.action.ApplyFilterToTreeTableAction;
@@ -141,9 +141,8 @@ public class DroidMainFrame extends JFrame {
     private JFileChooser filterFileChooser;
     private ResourceSelectorDialog resourceFileChooser;
     private ButtonManager buttonManager;
-    private ConfigDialog configDialog;
     private GlobalContext globalContext;
-    private JFileChooser exportFileChooser;
+    private ExportFileChooser exportFileChooser;
     private SignatureInstallDialog signatureInstallDialog;
     private ReportDialog reportDialog;
     private AboutDialog aboutDialog;
@@ -194,8 +193,9 @@ public class DroidMainFrame extends JFrame {
     /**
      * 
      */
-    void checkSignatureUpdates() {
+    public void checkSignatureUpdates() {
         final PropertiesConfiguration properties = globalContext.getGlobalConfig().getProperties();
+        final FileHandler propertiesFileHandler = globalContext.getGlobalConfig().getPropertiesFileHandler();
         boolean autoCheck = properties.getBoolean(DroidGlobalProperty.UPDATE_AUTO_CHECK.getName());
         boolean checkNow = properties.getBoolean(DroidGlobalProperty.UPDATE_ON_STARTUP.getName());
 
@@ -239,9 +239,9 @@ public class DroidMainFrame extends JFrame {
                 
                 properties.setProperty(DroidGlobalProperty.LAST_UPDATE_CHECK.getName(), System.currentTimeMillis());
                 try {
-                    properties.save();
+                    propertiesFileHandler.save();
                 } catch (ConfigurationException e) {
-                    log.warn("Could not save the last update check time to the file: " + properties.getPath());
+                    log.warn("Could not save the last update check time to the file: " + propertiesFileHandler.getPath());
                 }
             }
         }
@@ -267,7 +267,7 @@ public class DroidMainFrame extends JFrame {
         return filesToUpdate;
     }
 
-    private void createDefaultProfile() {
+    public void createDefaultProfile() {
         final NewProfileAction newProfileAction = 
             new NewProfileAction(droidContext, profileManager, jProfilesTabbedPane);
         newProfileAction.addPropertyChangeListener(evt -> {
@@ -285,7 +285,7 @@ public class DroidMainFrame extends JFrame {
         }
     }
 
-    private void init() {
+    public void init() {
         log.info("Starting DROID.");
         URL icon = getClass().getResource("/uk/gov/nationalarchives/droid/icons/DROID16.gif");
         setIconImage(new ImageIcon(icon).getImage());
@@ -320,7 +320,6 @@ public class DroidMainFrame extends JFrame {
 
         globalContext = new SpringGuiContext();
         profileManager = globalContext.getProfileManager();
-        configDialog = new ConfigDialog(this, globalContext);
         droidContext = new DroidUIContext(jProfilesTabbedPane, profileManager);
         exportFileChooser = new ExportFileChooser();
         filterFileChooser = new FilterFileChooser(globalContext.getGlobalConfig().getFilterDir().toFile());
@@ -1172,25 +1171,29 @@ public class DroidMainFrame extends JFrame {
     }// GEN-LAST:event_jMenuItemCopyFIlterToAllActionPerformed
 
     private void settingsMenuItemActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_settingsMenuItemActionPerformed
-        // initialise the dialog's values
+        // create the dialog and initialise the dialog's values
         Map<String, Object> settings = globalContext.getGlobalConfig().getPropertiesMap();
-        configDialog.init(settings);
 
-        configDialog.setVisible(true);
-        if (configDialog.getResponse() == ConfigDialog.OK) {
-            try {
-                globalContext.getGlobalConfig().update(configDialog.getGlobalConfig());
-            } catch (ConfigurationException e) {
-                log.error("Error updating properties: " + e.getMessage(), e);
-                JOptionPane.showMessageDialog(configDialog, NbBundle.getMessage(ConfigDialog.class,
-                        "ConfigDialog.error.text"),
-                        NbBundle.getMessage(ConfigDialog.class, "ConfigDialog.error.title"), JOptionPane.ERROR_MESSAGE);
-
+        ConfigDialog configDialog = new ConfigDialog(this, globalContext);
+        try {
+            configDialog.init(settings);
+            configDialog.setVisible(true);
+            if (configDialog.getResponse() == ConfigDialog.OK) {
+                try {
+                    globalContext.getGlobalConfig().update(configDialog.getGlobalConfig());
+                } catch (ConfigurationException e) {
+                    log.error("Error updating properties: " + e.getMessage(), e);
+                    JOptionPane.showMessageDialog(configDialog, NbBundle.getMessage(ConfigDialog.class,
+                                    "ConfigDialog.error.text"),
+                            NbBundle.getMessage(ConfigDialog.class, "ConfigDialog.error.title"), JOptionPane.ERROR_MESSAGE);
+                }
             }
-        }
 
-        if (configDialog.getCreateNewProfile()) {
-            createAndInitNewProfile();
+            if (configDialog.getCreateNewProfile()) {
+                createAndInitNewProfile();
+            }
+        } finally {
+            configDialog.dispose();
         }
     }// GEN-LAST:event_settingsMenuItemActionPerformed
 
@@ -1460,6 +1463,8 @@ public class DroidMainFrame extends JFrame {
         } else {
             exportOptions.setExportOptions(ExportOptions.ONE_ROW_PER_FILE);
         }
+
+        exportOptions.setDefaultTemplatesFolder(globalContext.getGlobalConfig().getExportTemplatesDir());
         exportOptions.showDialog();
         if (exportOptions.isApproved()) {
             String columnNames = exportOptions.getColumnsToExport();
@@ -1467,7 +1472,9 @@ public class DroidMainFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "No columns for export were selected.",
                         "Export warning", JOptionPane.WARNING_MESSAGE);
             } else {
+                exportFileChooser.setExportOutputOptions(exportOptions.getExportOutputOptions());
                 int response = exportFileChooser.showSaveDialog(this);
+
                 if (response == JFileChooser.APPROVE_OPTION) {
                     List<String> profileIds = new ArrayList<String>();
                     profileIds.addAll(exportOptions.getSelectedProfileIds());
@@ -1482,29 +1489,28 @@ public class DroidMainFrame extends JFrame {
                     exportAction.setDestination(exportFileChooser.getSelectedFile());
                     exportAction.setProfileIds(profileIds);
                     exportAction.setExportOptions(exportOptions.getExportOptions());
+                    exportAction.setExportOutputOptions(exportOptions.getExportOutputOptions());
                     exportAction.setOutputEncoding(exportOptions.getOutputEncoding());
                     exportAction.setBom(exportOptions.isBom());
                     exportAction.setQuoteAllFields(exportOptions.getQuoteAllColumns());
                     exportAction.setColumnsToWrite(columnNames);
+                    exportAction.setExportTemplatePath(exportOptions.getTemplatePath());
 
-                    exportAction.setCallback(new ActionDoneCallback<ExportAction>() {
-                        @Override
-                        public void done(ExportAction action) {
-                            try {
-                                exportDialog.setVisible(false);
-                                exportDialog.dispose();
-                                action.get();
-                                JOptionPane.showMessageDialog(DroidMainFrame.this, "Export Complete.", "Export Complete",
-                                        JOptionPane.INFORMATION_MESSAGE);
-                            } catch (ExecutionException e) {
-                                DialogUtils.showGeneralErrorDialog(DroidMainFrame.this, "Export Error", e.getCause()
-                                        .getMessage());
-                            } catch (InterruptedException e) {
-                                DialogUtils.showGeneralErrorDialog(DroidMainFrame.this, "Export Interrupted", e.getCause()
-                                        .getMessage());
-                            } catch (CancellationException e) {
-                                log.info("Export cancelled");
-                            }
+                    exportAction.setCallback(action -> {
+                        try {
+                            exportDialog.setVisible(false);
+                            exportDialog.dispose();
+                            action.get();
+                            JOptionPane.showMessageDialog(DroidMainFrame.this, "Export Complete.", "Export Complete",
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        } catch (ExecutionException e) {
+                            DialogUtils.showGeneralErrorDialog(DroidMainFrame.this, "Export Error", e.getCause()
+                                    .getMessage());
+                        } catch (InterruptedException e) {
+                            DialogUtils.showGeneralErrorDialog(DroidMainFrame.this, "Export Interrupted", e.getCause()
+                                    .getMessage());
+                        } catch (CancellationException e) {
+                            log.info("Export cancelled");
                         }
                     });
 

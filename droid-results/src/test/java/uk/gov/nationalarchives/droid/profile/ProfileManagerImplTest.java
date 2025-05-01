@@ -32,6 +32,7 @@
 package uk.gov.nationalarchives.droid.profile;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,9 +50,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -72,7 +73,7 @@ import uk.gov.nationalarchives.droid.util.FileUtil;
  */
 public class ProfileManagerImplTest {
 
-    private static final String DERBY_DRIVER_CLASSNAME = "org.apache.derby.jdbc.EmbeddedDriver";
+    private static final String DERBY_DRIVER_CLASSNAME = "org.apache.derby.iapi.jdbc.AutoloadedDriver";
     
     private ProfileManagerImpl profileManager;
     private ProfileSpecDao profileSpecDao;
@@ -262,6 +263,12 @@ public class ProfileManagerImplTest {
         overridden = createOverriddenProfile("profile.maxBytesToScan", maxBytes);
         assertEquals(maxBytes, mainInstance.getMaxBytesToScan());
         assertEquals((Long) (maxBytes + 1000L), (Long) overridden.getMaxBytesToScan());
+
+        // Sleep for 10ms between each assertion to enable each profile instance creation
+        Thread.sleep(10);
+        overridden = createOverriddenProfile(Map.of("update.proxy", true, "update.proxy.host", "localhost", "update.proxy.port", "8080"));
+        assertNull(mainInstance.getProxy());
+        assertEquals(overridden.getProxy(), URI.create("http://localhost:8080"));
     }
 
 
@@ -278,6 +285,16 @@ public class ProfileManagerImplTest {
         } else {
             overrides.setProperty(propertyName, "true");
         }
+        return profileManager.createProfile(sigInfo, overrides);
+    }
+
+    private ProfileInstance createOverriddenProfile(Map<String, Object> properties) throws ProfileManagerException {
+        Map<SignatureType, SignatureFileInfo> sigInfo = new HashMap<>();
+        PropertiesConfiguration overrides = new PropertiesConfiguration();
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            overrides.setProperty(entry.getKey(), entry.getValue());
+        }
+
         return profileManager.createProfile(sigInfo, overrides);
     }
 

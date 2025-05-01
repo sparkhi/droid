@@ -67,7 +67,7 @@ public class Ole2IdentifierEngine extends AbstractIdentifierEngine {
 
     //CHECKSTYLE:OFF - cyclomatic complexity too high.
     @Override
-    public void process(IdentificationRequest request, ContainerSignatureMatchCollection matches) throws IOException {
+    public void process(IdentificationRequest<InputStream> request, ContainerSignatureMatchCollection matches) throws IOException {
         //CHECKSTYLE:ON
         InputStream in = null;
         POIFSFileSystem reader = null;
@@ -104,7 +104,7 @@ public class Ole2IdentifierEngine extends AbstractIdentifierEngine {
                 boolean needsBinaryMatch = false;
 
                 for (ContainerSignatureMatch match : matches.getContainerSignatureMatches()) {
-                    match.matchFileEntry(entryName);
+                    match.matchFileEntry(entryName, request.getFileName());
                     if (match.needsBinaryMatch(entryName)) {
                         needsBinaryMatch = true;
                     }

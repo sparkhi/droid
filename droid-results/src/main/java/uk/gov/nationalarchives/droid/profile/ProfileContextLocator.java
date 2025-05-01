@@ -32,15 +32,16 @@
 package uk.gov.nationalarchives.droid.profile;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.configuration.CombinedConfiguration;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.tree.OverrideCombiner;
+import org.apache.commons.configuration2.CombinedConfiguration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.tree.OverrideCombiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,7 @@ import uk.gov.nationalarchives.droid.core.interfaces.config.DroidGlobalConfig;
 import uk.gov.nationalarchives.droid.core.interfaces.config.DroidGlobalProperty;
 import uk.gov.nationalarchives.droid.core.interfaces.signature.SignatureFileException;
 import uk.gov.nationalarchives.droid.export.interfaces.ExportOptions;
+import uk.gov.nationalarchives.droid.export.interfaces.ExportOutputOptions;
 import uk.gov.nationalarchives.droid.results.handlers.JDBCBatchResultHandlerDao;
 import uk.gov.nationalarchives.droid.results.handlers.ProgressObserver;
 import uk.gov.nationalarchives.droid.util.FileUtil;
@@ -203,6 +205,9 @@ public class ProfileContextLocator {
 
         ExportOptions options = profile.getExportOptions() == null? ExportOptions.ONE_ROW_PER_FILE : profile.getExportOptions();
         props.setProperty("exportOptions", options.name());
+
+        ExportOutputOptions outputOptions = profile.getExportOutputOptions() == null ? ExportOutputOptions.CSV_OUTPUT : profile.getExportOutputOptions();
+        props.setProperty("exportOutputOptions", outputOptions.name());
 
         String createUrl = globalConfig.getProperties().getString("database.createUrl");
         if (createUrl == null || createUrl.isEmpty()) {
@@ -427,6 +432,13 @@ public class ProfileContextLocator {
         profileInstance.setColumnsToWrite(mergedConfig.getString(DroidGlobalProperty.COLUMNS_TO_WRITE.getName(), ""));
         profileInstance.setExportOptions(ExportOptions.valueOf(mergedConfig.getString(DroidGlobalProperty.EXPORT_OPTIONS.getName(),
                 ExportOptions.ONE_ROW_PER_FILE.name())));
+        String updateUseProxyName = DroidGlobalProperty.UPDATE_USE_PROXY.getName();
+        if (mergedConfig.containsKey(updateUseProxyName) && mergedConfig.getBoolean(updateUseProxyName)) {
+            URI proxy = URI.create("http://" + mergedConfig.getString(DroidGlobalProperty.UPDATE_PROXY_HOST.getName()) + ":" + mergedConfig.getInt(DroidGlobalProperty.UPDATE_PROXY_PORT.getName()));
+            profileInstance.setProxy(proxy);
+        }
+        profileInstance.setExportOutputOptions(ExportOutputOptions.valueOf(mergedConfig.getString(DroidGlobalProperty.EXPORT_OUTPUT_OPTIONS.getName(),
+                ExportOutputOptions.CSV_OUTPUT.name())));
         addProfileContext(profileInstance);
         return profileInstance;
     }

@@ -64,7 +64,12 @@ public interface ItemWriter<T> {
      * @param options Sets the options to use when writing out the export.
      */
     void setOptions(ExportOptions options);
-    
+
+    /**
+     * @param outputOptions Sets the output options to use when writing out the export
+     */
+    void setOutputOptions(ExportOutputOptions outputOptions);
+
     /**
      * Customises the column headers in the export output.
      * @param headersToSet - Map of headers to customise and values to set.
@@ -87,5 +92,12 @@ public interface ItemWriter<T> {
      * @param columnNames A space separated list of column headers, or null or empty if all columns should be written.
      */
     void setColumnsToWrite(String columnNames);
+
+    /**
+     * Sets the ExportTemplate which can override the column names, column ordering and contents of the columns.
+     *
+     * @param template An instance of ExportTemplate.
+     */
+    void setExportTemplate(ExportTemplate template);
 
 }

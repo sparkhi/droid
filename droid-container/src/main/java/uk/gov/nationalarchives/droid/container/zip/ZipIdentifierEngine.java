@@ -33,16 +33,22 @@ package uk.gov.nationalarchives.droid.container.zip;
 
 import net.java.truevfs.comp.zip.ZipEntry;
 import net.java.truevfs.comp.zip.ZipFile;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.nationalarchives.droid.container.AbstractIdentifierEngine;
 import uk.gov.nationalarchives.droid.container.ContainerSignatureMatch;
 import uk.gov.nationalarchives.droid.container.ContainerSignatureMatchCollection;
+import uk.gov.nationalarchives.droid.container.FileMatcher;
 import uk.gov.nationalarchives.droid.core.interfaces.IdentificationRequest;
 import uk.gov.nationalarchives.droid.core.interfaces.archive.ByteseekWindowWrapper;
 import uk.gov.nationalarchives.droid.core.signature.ByteReader;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.List;
+import java.util.zip.ZipException;
 
 /**
  *
@@ -50,37 +56,88 @@ import java.util.List;
  */
 public class ZipIdentifierEngine extends AbstractIdentifierEngine {
 
-    @Override
-    public void process(IdentificationRequest request, ContainerSignatureMatchCollection matches) throws IOException {
-        ZipFile zipFile = new ZipFile(new ByteseekWindowWrapper(request.getWindowReader()), ZipFile.DEFAULT_CHARSET, true, false);
+    private static final FileMatcher FILE_MATCHER = new FileMatcher();
 
-        try {
+    private static final Logger LOG = LoggerFactory.getLogger(ZipIdentifierEngine.class);
+
+    @Override
+    public void process(IdentificationRequest<InputStream> request, ContainerSignatureMatchCollection matches) throws IOException {
+
+        try (ZipFile zipFile = new ZipFile(new ByteseekWindowWrapper(request.getWindowReader()), ZipFile.DEFAULT_CHARSET, true, false)) {
             // For each entry:
             for (String entryName : matches.getAllFileEntries()) {
-                final ZipEntry entry = zipFile.entry(entryName);
+                final ZipEntry entry = getEntry(entryName, zipFile, request.getFileName());
                 if (entry != null) {
                     // Get a stream for the entry and a byte reader over the stream:
                     InputStream stream = zipFile.getInputStream(entry.getName());
-                    ByteReader reader = null;
-                    try {
-                        reader = newByteReader(stream);
-                        // For each signature to match:
-                        List<ContainerSignatureMatch> matchList = matches.getContainerSignatureMatches();
-                        for (ContainerSignatureMatch match : matchList) {
-                            match.matchBinaryContent(entryName, reader);
-                        }
-                    } finally {
-                        if (reader != null) {
-                            reader.close();
-                        }
-                        if (stream != null) {
-                            stream.close();
-                        }
+                    matchEntry(matches, entryName, stream);
+                }
+            }
+        } catch (ZipException ze) {
+            LOG.warn("Initial zip file parsing failed. Will try again with commons-compress {}", ze.getMessage());
+            processFallback(request, matches);
+        }
+    }
+
+    private void processFallback(IdentificationRequest<InputStream> request, ContainerSignatureMatchCollection matches) throws IOException {
+        try (var zipFile = org.apache.commons.compress.archivers.zip.ZipFile.builder()
+                .setIgnoreLocalFileHeader(true)
+                .setSeekableByteChannel(new ByteseekWindowWrapper(request.getWindowReader()))
+                .get()) {
+            // For each entry:
+            for (String entryName : matches.getAllFileEntries()) {
+                final ZipArchiveEntry entry = getFallbackEntry(entryName, zipFile, request.getFileName());
+                if (entry != null) {
+                    // Get a stream for the entry and a byte reader over the stream:
+                    InputStream stream = zipFile.getInputStream(entry);
+                    matchEntry(matches, entryName, stream);
+                }
+            }
+        }
+    }
+
+    private void matchEntry(ContainerSignatureMatchCollection matches, String entryName, InputStream stream) throws IOException {
+        try (ByteReader reader = newByteReader(stream)) {
+            // For each signature to match:
+            List<ContainerSignatureMatch> matchList = matches.getContainerSignatureMatches();
+            for (ContainerSignatureMatch match : matchList) {
+                match.matchBinaryContent(entryName, reader);
+            }
+        } finally {
+            if (stream != null) {
+                stream.close();
+            }
+        }
+    }
+
+    private static ZipEntry getEntry(String entryName, ZipFile zipFile, String containerFileName) {
+        ZipEntry entry = zipFile.entry(entryName);
+        if (entry == null) {
+            for (Iterator<? extends ZipEntry> it = zipFile.entries().asIterator(); it.hasNext();) {
+                ZipEntry eachEntry = it.next();
+                if (!eachEntry.isDirectory()) {
+                    if (FILE_MATCHER.fileMatches(entryName, eachEntry.getName(), containerFileName)) {
+                        return eachEntry;
+                    }
+
+                }
+            }
+        }
+        return entry;
+    }
+
+    private static ZipArchiveEntry getFallbackEntry(String entryName, org.apache.commons.compress.archivers.zip.ZipFile zipFile, String containerFileName) {
+        ZipArchiveEntry entry = zipFile.getEntry(entryName);
+        if (entry == null) {
+            for (Iterator<? extends ZipArchiveEntry> it = zipFile.getEntries().asIterator(); it.hasNext();) {
+                ZipArchiveEntry eachEntry = it.next();
+                if (!eachEntry.isDirectory()) {
+                    if (FILE_MATCHER.fileMatches(entryName, eachEntry.getName(), containerFileName)) {
+                        return eachEntry;
                     }
                 }
             }
-        } finally {
-            zipFile.close();
         }
+        return entry;
     }
 }

@@ -35,7 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.Date;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import uk.gov.nationalarchives.droid.core.interfaces.resource.ResourceUtils;
 import uk.gov.nationalarchives.droid.util.FileUtil;
@@ -76,6 +76,16 @@ public class FileProfileResource extends AbstractProfileResource {
      */
     @Override
     public boolean isDirectory() {
+        return false;
+    }
+
+    @Override
+    public boolean isS3Object() {
+        return false;
+    }
+
+    @Override
+    public boolean isHttpObject() {
         return false;
     }
 

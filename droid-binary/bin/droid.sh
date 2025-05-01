@@ -86,7 +86,7 @@ logLevel=""
 # Max memory: droidMemory
 # -----------------------
 # The maximum memory for DROID to use in megabytes.
-droidMemory="512m"
+droidMemory="1024m"
 
 
 # Run DROID:
@@ -120,6 +120,7 @@ if [ "Darwin" = "$OS" ]; then
     OPTIONS=$OPTIONS" -Xdock:name=DROID"
     OPTIONS=$OPTIONS" -Dcom.apple.mrj.application.growbox.intrudes=false"
     OPTIONS=$OPTIONS" -Dcom.apple.mrj.application.live-resize=true"
+    OPTIONS=$OPTIONS" -Djdk.xml.enableExtensionFunctions=true"
 fi
 
 # Build command-line options from the settings above:

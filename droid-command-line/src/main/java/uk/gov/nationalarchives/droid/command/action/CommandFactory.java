@@ -96,7 +96,6 @@ public interface CommandFactory {
      */
     DroidCommand getNoProfileCommand(CommandLine cli) throws CommandLineSyntaxException;
 
-
     /**
      * @return a new check signature update command.
      */

@@ -34,7 +34,7 @@ package uk.gov.nationalarchives.droid.core.interfaces.config;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration2.Configuration;
 
 /**
  * All DROID global properties.
@@ -151,13 +151,21 @@ public enum DroidGlobalProperty {
      */
     EXPORT_OPTIONS("profile.exportOptions", PropertyType.TEXT, true),
 
+    /**
+     * The output options used when exporting - options are json or csv.
+     */
+    EXPORT_OUTPUT_OPTIONS("profile.exportOutputOptions", PropertyType.TEXT, true),
+
     /** Whether to match all extensions, or just ones without another signature attached. */
     EXTENSION_ALL("profile.matchAllExtensions", PropertyType.BOOLEAN, true),
     
     /** Whether the database plays safe (=true), or gains performance
      * but loses resilience in the face of failures (=false).
      */
-    DATABASE_DURABILITY("database.durability", PropertyType.BOOLEAN, true); 
+    DATABASE_DURABILITY("database.durability", PropertyType.BOOLEAN, true),
+
+    /** Whether to allow loading files from S3. */
+    FILES_FROM_S3("profile.s3", PropertyType.BOOLEAN, true);
     
     private static Map<String, DroidGlobalProperty> allValues = new HashMap<String, DroidGlobalProperty>(); 
     

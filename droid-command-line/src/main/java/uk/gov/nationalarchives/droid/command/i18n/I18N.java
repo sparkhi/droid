@@ -72,9 +72,24 @@ public final class I18N {
     public static final String COLUMNS_TO_WRITE_HELP = "profile.columnsToWrite.help";
 
     /**
+     * Sets the absolute path of an export template.
+     */
+    public static final String EXPORT_TEMPLATE_HELP = "profile.exportTemplate.help";
+
+    /**
      * Sets CSV output to write a row per format (rather than a row per file which is the default).
      */
     public static final String ROW_PER_IDENTIFICATION = "profile.rowsPerFormat.help";
+
+    /**
+     * Writes the output as JSON.
+     */
+    public static final String JSON_OUTPUT = "profile.json.help";
+
+    /**
+     * Writes the output as JSON.
+     */
+    public static final String CSV_OUTPUT = "profile.csv.help";
 
     /**
      * Override default properties from the command line.
@@ -121,6 +136,9 @@ public final class I18N {
 
     /** Run a profile outputting to a csv file or console. */
     public static final String RUN_FILE_PROFILE_HELP = "profile.run.file.help";
+
+    /** Configure a proxy to send http requests through for S3 or HTTP identification. */
+    public static final String PROXY_HELP = "proxy.help";
 
     /** Help for signature file. */
     public static final String SIGNATURE_FILE_HELP = "signature_file.help";
@@ -221,5 +239,4 @@ public final class I18N {
         String pattern = getResource(key);
         return MessageFormat.format(pattern, params);
     }
-
 }

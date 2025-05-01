@@ -34,11 +34,11 @@ package uk.gov.nationalarchives.droid.core.interfaces.archive;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -47,17 +47,17 @@ import org.junit.Test;
  */
 public class ArchiveHandlerFactoryTest {
 
-    private ArchiveHandlerFactoryImpl factory;
-    private ArchiveHandler zipHandler;
-    private ArchiveHandler tarHandler;
-    private ArchiveHandler gzHandler;
-    private ArchiveHandler arcHandler;
-    private ArchiveHandler bzHandler;
+    private static ArchiveHandlerFactoryImpl factory;
+    private static ArchiveHandler zipHandler;
+    private static ArchiveHandler tarHandler;
+    private static ArchiveHandler gzHandler;
+    private static ArchiveHandler arcHandler;
+    private static ArchiveHandler bzHandler;
 
-    private ArchiveHandler sevenZipHandler;
+    private static ArchiveHandler sevenZipHandler;
 
-    @Before
-    public void setup() {
+    @BeforeAll
+    public static void setup() {
         factory = new ArchiveHandlerFactoryImpl();
 
         zipHandler = mock(ArchiveHandler.class);
@@ -72,7 +72,7 @@ public class ArchiveHandlerFactoryTest {
 
         handlers.put("ZIP", zipHandler);
         handlers.put("TAR", tarHandler);
-        handlers.put("GZ", gzHandler);
+        handlers.put("GZIP", gzHandler);
         handlers.put("ARC", arcHandler);
         handlers.put("BZ", bzHandler);
 
@@ -87,7 +87,7 @@ public class ArchiveHandlerFactoryTest {
      
         assertEquals(zipHandler, factory.getHandler("ZIP"));
         assertEquals(tarHandler, factory.getHandler("TAR"));
-        assertEquals(gzHandler, factory.getHandler("GZ"));
+        assertEquals(gzHandler, factory.getHandler("GZIP"));
         assertEquals(arcHandler, factory.getHandler("ARC"));
         assertEquals(bzHandler, factory.getHandler("BZ"));
         assertEquals(sevenZipHandler, factory.getHandler("7Z"));

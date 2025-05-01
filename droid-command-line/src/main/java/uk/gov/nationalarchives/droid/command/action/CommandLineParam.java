@@ -238,9 +238,39 @@ public enum CommandLineParam {
     },
 
     /**
+     * Specifies the absolute path for the export template to be used.
+     */
+    EXPORT_TEMPLATE("et", "export-template", true, -1, I18N.EXPORT_TEMPLATE_HELP, "template-file") {
+        @Override
+        public DroidCommand getCommand(CommandFactory commandFactory, CommandLine cli) {
+            return null;
+        }
+    },
+
+    /**
      * Specifies that a row per identification should be written out in a CSV file or console output.
      */
     ROW_PER_FORMAT("ri", "row-per-id", I18N.ROW_PER_IDENTIFICATION) {
+        @Override
+        public DroidCommand getCommand(CommandFactory commandFactory, CommandLine cli) {
+            return null;
+        }
+    },
+
+    /**
+     * Outputs the results as json.
+     */
+    JSON_OUTPUT("json", "json-output", I18N.JSON_OUTPUT) {
+        @Override
+        public DroidCommand getCommand(CommandFactory commandFactory, CommandLine cli) {
+            return null;
+        }
+    },
+
+    /**
+     * Outputs the results as csv.
+     */
+    CSV_OUTPUT("csv", "csv-output", I18N.CSV_OUTPUT) {
         @Override
         public DroidCommand getCommand(CommandFactory commandFactory, CommandLine cli) {
             return null;
@@ -263,6 +293,14 @@ public enum CommandLineParam {
             return null;
         }
     },
+
+    /** Sets a proxy for use with HTTP and S3 URLs. */
+    HTTP_PROXY("proxy", "http-proxy", true, -1, I18N.PROXY_HELP, "proxyUrl") {
+        @Override public DroidCommand getCommand(CommandFactory commandFactory, CommandLine cli) {
+            return null;
+        }
+    },
+
 
     /** Container signature file. */
     CONTAINER_SIGNATURE_FILE("Nc", "container-file", true, 1,
@@ -481,6 +519,19 @@ public enum CommandLineParam {
             topGroup.addOption(param.newOption());
         }
 
+        addOptions(options);
+
+        options.addOptionGroup(getFilterOptionGroup());
+        options.addOptionGroup(getFileFilterOptionGroup());
+        options.addOptionGroup(getExportOptionGroup());
+        options.addOptionGroup(getExportOutputOptionsGroup());
+        options.addOptionGroup(topGroup);
+
+        return options;
+
+    }
+
+    private static void addOptions(Options options) {
         options.addOption(PROFILES.newOption());
         options.addOption(OUTPUT_FILE.newOption());
         options.addOption(PROFILE_PROPERTY.newOption());
@@ -500,13 +551,9 @@ public enum CommandLineParam {
         options.addOption(COLUMNS_TO_WRITE.newOption());
         options.addOption(QUOTE_COMMAS.newOption());
         options.addOption(ROW_PER_FORMAT.newOption());
-
-        options.addOptionGroup(getFilterOptionGroup());
-        options.addOptionGroup(getFileFilterOptionGroup());
-        options.addOptionGroup(topGroup);
-
-        return options;
-
+        options.addOption(HTTP_PROXY.newOption());
+        options.addOption(JSON_OUTPUT.newOption());
+        options.addOption(CSV_OUTPUT.newOption());
     }
 
     private static OptionGroup getFileFilterOptionGroup() {
@@ -521,6 +568,20 @@ public enum CommandLineParam {
         filterOptions.addOption(ALL_FILTER.newOption());
         filterOptions.addOption(ANY_FILTER.newOption());
         return filterOptions;
+    }
+
+    private static OptionGroup getExportOptionGroup() {
+        OptionGroup exportOptions = new OptionGroup();
+        exportOptions.addOption(COLUMNS_TO_WRITE.newOption());
+        exportOptions.addOption(EXPORT_TEMPLATE.newOption());
+        return exportOptions;
+    }
+
+    private static OptionGroup getExportOutputOptionsGroup() {
+        OptionGroup exportOutputOptions = new OptionGroup();
+        exportOutputOptions.addOption(JSON_OUTPUT.newOption());
+        exportOutputOptions.addOption(CSV_OUTPUT.newOption());
+        return exportOutputOptions;
     }
 
     /**
@@ -603,6 +664,7 @@ public enum CommandLineParam {
         options.addOption(BOM.newOption());
         options.addOption(QUOTE_COMMAS.newOption());
         options.addOption(COLUMNS_TO_WRITE.newOption());
+        options.addOption(EXPORT_TEMPLATE.newOption());
         return options;
     }
 

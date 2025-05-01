@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import uk.gov.nationalarchives.droid.core.interfaces.filter.CriterionFieldEnum;
 import uk.gov.nationalarchives.droid.core.interfaces.filter.CriterionOperator;
@@ -96,7 +96,7 @@ public class PUIDMetadata extends GenericMetadata {
         }
     }
 
-    private static class FilterValueComparator implements Comparator<FilterValue> {
+    private static final class FilterValueComparator implements Comparator<FilterValue> {
 
         @Override
         public int compare(FilterValue o1, FilterValue o2) {

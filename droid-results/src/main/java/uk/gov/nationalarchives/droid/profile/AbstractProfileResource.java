@@ -36,12 +36,12 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Date;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * @author rflitcroft
@@ -70,7 +70,10 @@ public abstract class AbstractProfileResource {
     
     @XmlElement(name = "Path")
     private String path;
-    
+
+    @XmlElement(name = "Proxy")
+    private URI proxy;
+
     /**
      * Default Constructor.
      */
@@ -139,6 +142,16 @@ public abstract class AbstractProfileResource {
      * @return true if the resource is a directory of files, false otherwise
      */
     public abstract boolean isDirectory();
+
+    /**
+     * @return true if the resource is an S3 object
+     */
+    public abstract boolean isS3Object();
+
+    /**
+     * @return true if the resource is an HTTP object
+     */
+    public abstract boolean isHttpObject();
 
     /**
      * @return true if the resource should be recursed into; false otherwise
@@ -252,6 +265,12 @@ public abstract class AbstractProfileResource {
     public void setName(String name) {
         this.name = name;
     }
-    
 
+    public URI getProxy() {
+        return proxy;
+    }
+
+    public void setProxy(URI proxy) {
+        this.proxy = proxy;
+    }
 }

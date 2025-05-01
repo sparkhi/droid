@@ -39,8 +39,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import uk.gov.nationalarchives.droid.core.interfaces.filter.Filter;
+import uk.gov.nationalarchives.droid.export.interfaces.ExportDetails;
 import uk.gov.nationalarchives.droid.export.interfaces.ExportManager;
 import uk.gov.nationalarchives.droid.export.interfaces.ExportOptions;
+import uk.gov.nationalarchives.droid.export.interfaces.ExportOutputOptions;
 import uk.gov.nationalarchives.droid.profile.ProfileInstance;
 import uk.gov.nationalarchives.droid.profile.ProfileManager;
 import uk.gov.nationalarchives.droid.results.handlers.ProgressObserver;
@@ -57,10 +59,13 @@ public class ExportCommand implements DroidCommand {
     private String destination;
     private Filter filter;
     private ExportOptions options;
+    private ExportOutputOptions outputOptions;
     private boolean bom;
     private boolean quoteAllFields = true;
     private String columnsToWrite;
-    
+
+    private String exportTemplate;
+
     /**
      * {@inheritDoc}
      */
@@ -86,9 +91,7 @@ public class ExportCommand implements DroidCommand {
         // Run the export
         try {
             //default to UTF-8
-            final String outputEncoding = "UTF-8"; //TODO set encoding from command line option
-            final Future<?> fProfiles = exportManager.exportProfiles(profileIds, destination, filter,
-                    options, outputEncoding, bom, quoteAllFields, columnsToWrite);
+            final Future<?> fProfiles = exportManager.exportProfiles(profileIds, destination, filter, getExportDetails());
             fProfiles.get();
         } catch (InterruptedException e) {
             throw new CommandExecutionException(e);
@@ -137,6 +140,20 @@ public class ExportCommand implements DroidCommand {
      */
     public void setExportOptions(ExportOptions opt) {
         this.options = opt;
+    }
+
+    /**
+     * @return The export output options.
+     */
+    public ExportOutputOptions getOutputOptions() {
+        return outputOptions;
+    }
+
+    /**
+     * @param outputOptions The export output options to use for this command.
+     */
+    public void setOutputOptions(ExportOutputOptions outputOptions) {
+        this.outputOptions = outputOptions;
     }
     
     /**
@@ -217,5 +234,39 @@ public class ExportCommand implements DroidCommand {
      */
     public String getColumnsToWrite() {
         return columnsToWrite;
+    }
+
+    /**
+     * @return Absolute path of export template.
+     */
+    public String getExportTemplate() {
+        return exportTemplate;
+    }
+
+    /**
+     * @param exportTemplate Absolute path of export template.
+     */
+    public void setExportTemplate(String exportTemplate) {
+        this.exportTemplate = exportTemplate;
+    }
+
+
+    /**
+     *
+     * @return the export details for this export command.
+     * For an export from CLI,
+     * OutputEncoding is always defaulted to UTF-8
+     */
+    private ExportDetails getExportDetails() {
+        ExportDetails.ExportDetailsBuilder builder = new ExportDetails.ExportDetailsBuilder();
+
+        return builder.withExportOptions(getExportOptions())
+                .withExportOutputOptions(getOutputOptions())
+                .withOutputEncoding("UTF-8") //default
+                .withBomFlag(isBom())
+                .withQuotingAllFields(getQuoteAllFields())
+                .withColumnsToWrite(getColumnsToWrite())
+                .withExportTemplatePath(getExportTemplate())
+                .build();
     }
 }

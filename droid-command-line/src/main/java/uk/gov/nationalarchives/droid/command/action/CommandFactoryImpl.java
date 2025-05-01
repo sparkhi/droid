@@ -30,18 +30,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package uk.gov.nationalarchives.droid.command.action;
+import java.io.File;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-
+import java.net.URI;
+import java.util.*;
+import java.net.MalformedURLException;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.configuration.CombinedConfiguration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.tree.OverrideCombiner;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.configuration2.CombinedConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.io.FileHandler;
+import org.apache.commons.configuration2.io.FileLocator;
+import org.apache.commons.configuration2.io.FileLocatorUtils;
+import org.apache.commons.configuration2.tree.OverrideCombiner;
+import org.apache.commons.lang3.StringUtils;
 
 import uk.gov.nationalarchives.droid.command.context.GlobalContext;
 import uk.gov.nationalarchives.droid.command.filter.DqlCriterionFactory;
@@ -55,6 +57,7 @@ import uk.gov.nationalarchives.droid.core.interfaces.filter.CriterionOperator;
 import uk.gov.nationalarchives.droid.core.interfaces.filter.Filter;
 import uk.gov.nationalarchives.droid.core.interfaces.filter.FilterCriterion;
 import uk.gov.nationalarchives.droid.export.interfaces.ExportOptions;
+import uk.gov.nationalarchives.droid.export.interfaces.ExportOutputOptions;
 
 /**
  * Creates command objects from the cli.
@@ -87,6 +90,10 @@ public class CommandFactoryImpl implements CommandFactory {
         this.printWriter = printWriter;
     }
 
+    private ExportOutputOptions getExportOutputOptions(CommandLine cli) {
+        return cli.hasOption(CommandLineParam.JSON_OUTPUT.toString()) ? ExportOutputOptions.JSON_OUTPUT : ExportOutputOptions.CSV_OUTPUT;
+    }
+
     /**
      * @param cli the command line
      * @throws CommandLineSyntaxException command parse exception.
@@ -102,7 +109,7 @@ public class CommandFactoryImpl implements CommandFactory {
         final String destination = cli.getOptionValue(CommandLineParam.EXPORT_ONE_ROW_PER_FILE.toString());
 
         final String[] profiles = cli.getOptionValues(CommandLineParam.PROFILES.toString());
-        final ExportCommand cmd = context.getExportCommand(ExportOptions.ONE_ROW_PER_FILE);
+        final ExportCommand cmd = context.getExportCommand(ExportOptions.ONE_ROW_PER_FILE, getExportOutputOptions(cli));
         final boolean bom = cli.hasOption(CommandLineParam.BOM.toString());
 
         cmd.setDestination(destination);
@@ -113,6 +120,10 @@ public class CommandFactoryImpl implements CommandFactory {
         if (cli.hasOption(CommandLineParam.COLUMNS_TO_WRITE.getLongName())) {
             String columns = String.join(SPACE, cli.getOptionValues(CommandLineParam.COLUMNS_TO_WRITE.getLongName()));
             cmd.setColumnsToWrite(columns);
+        }
+
+        if (cli.hasOption(CommandLineParam.EXPORT_TEMPLATE.getLongName())) {
+            cmd.setExportTemplate(cli.getOptionValue(CommandLineParam.EXPORT_TEMPLATE.getLongName()));
         }
 
         if (cli.hasOption(CommandLineParam.ALL_FILTER.toString())) {
@@ -141,7 +152,7 @@ public class CommandFactoryImpl implements CommandFactory {
         final String destination = cli.getOptionValue(CommandLineParam.EXPORT_ONE_ROW_PER_FORMAT.toString());
 
         final String[] profiles = cli.getOptionValues(CommandLineParam.PROFILES.toString());
-        final ExportCommand cmd = context.getExportCommand(ExportOptions.ONE_ROW_PER_FORMAT);
+        final ExportCommand cmd = context.getExportCommand(ExportOptions.ONE_ROW_PER_FORMAT, getExportOutputOptions(cli));
         final boolean bom = cli.hasOption(CommandLineParam.BOM.toString());
         cmd.setDestination(destination);
         cmd.setProfiles(profiles);
@@ -151,6 +162,10 @@ public class CommandFactoryImpl implements CommandFactory {
         if (cli.hasOption(CommandLineParam.COLUMNS_TO_WRITE.getLongName())) {
             String columns = String.join(SPACE, cli.getOptionValues(CommandLineParam.COLUMNS_TO_WRITE.getLongName()));
             cmd.setColumnsToWrite(columns);
+        }
+
+        if (cli.hasOption(CommandLineParam.EXPORT_TEMPLATE.getLongName())) {
+            cmd.setExportTemplate(cli.getOptionValue(CommandLineParam.EXPORT_TEMPLATE.getLongName()));
         }
 
         if (cli.hasOption(CommandLineParam.ALL_FILTER.toString())) {
@@ -222,6 +237,7 @@ public class CommandFactoryImpl implements CommandFactory {
         final ProfileRunCommand command = context.getProfileRunCommand();
         PropertiesConfiguration overrides = getOverrideProperties(cli);
         processCommandLineArchiveFlags(cli, overrides);
+        setProxyParameters(cli, overrides);
         command.setResources(getResources(cli));
         command.setDestination(getDestination(cli, overrides)); // will also set the output csv file in overrides if present.
         command.setRecursive(cli.hasOption(CommandLineParam.RECURSIVE.toString()));
@@ -235,6 +251,10 @@ public class CommandFactoryImpl implements CommandFactory {
 
     @Override
     public DroidCommand getNoProfileCommand(final CommandLine cli) throws CommandLineSyntaxException {
+        return getCommand(cli, getNoProfileResources(cli));
+    }
+
+    private DroidCommand getCommand(CommandLine cli, String[] resources) throws CommandLineSyntaxException {
         final ProfileRunCommand command = context.getProfileRunCommand();
         PropertiesConfiguration overrides = getOverrideProperties(cli);
 
@@ -245,7 +265,9 @@ public class CommandFactoryImpl implements CommandFactory {
 
         overrides.setProperty(DroidGlobalProperty.QUOTE_ALL_FIELDS.getName(), false);
         overrides.setProperty(DroidGlobalProperty.COLUMNS_TO_WRITE.getName(), "FILE_PATH PUID");
-        command.setResources(getNoProfileResources(cli));
+
+        setProxyParameters(cli, overrides);
+        command.setResources(resources);
         command.setDestination(getDestination(cli, overrides)); // will also set the output csv file in overrides if present.
         command.setRecursive(cli.hasOption(CommandLineParam.RECURSIVE.toString()));
         command.setProperties(overrides); // must be called after we set destination.
@@ -254,6 +276,15 @@ public class CommandFactoryImpl implements CommandFactory {
         command.setResultsFilter(getFileOnlyResultsFilter());
         command.setIdentificationFilter(getIdentificationFilter(cli));
         return command;
+    }
+
+    private void setProxyParameters(CommandLine cli, PropertiesConfiguration overrides) {
+        if (cli.hasOption(CommandLineParam.HTTP_PROXY.toString())) {
+            URI proxyUri = URI.create(cli.getOptionValue(CommandLineParam.HTTP_PROXY.toString()));
+            overrides.setProperty(DroidGlobalProperty.UPDATE_USE_PROXY.getName(), true);
+            overrides.setProperty(DroidGlobalProperty.UPDATE_PROXY_HOST.getName(), proxyUri.getHost());
+            overrides.setProperty(DroidGlobalProperty.UPDATE_PROXY_PORT.getName(), proxyUri.getPort());
+        }
     }
 
     private Filter getFileOnlyResultsFilter() {
@@ -330,8 +361,12 @@ public class CommandFactoryImpl implements CommandFactory {
         final String propertyFile = cli.getOptionValue(CommandLineParam.PROPERTY_FILE.toString());
         if (propertyFile != null && !propertyFile.isEmpty()) {
             try {
-                overrideProperties = new PropertiesConfiguration(propertyFile);
-            } catch (ConfigurationException e) {
+                overrideProperties = new PropertiesConfiguration();
+                FileHandler overridePropertiesFileHandler = new FileHandler(overrideProperties);
+                FileLocator fileLocator = FileLocatorUtils.fileLocator().sourceURL(new File(propertyFile).toURI().toURL()).create();
+                overridePropertiesFileHandler.setFileLocator(fileLocator);
+                overridePropertiesFileHandler.load(propertyFile);
+            } catch (ConfigurationException | MalformedURLException e) {
                 throw new CommandLineSyntaxException(e);
             }
         }
@@ -357,18 +392,23 @@ public class CommandFactoryImpl implements CommandFactory {
             overrideProperties = new PropertiesConfiguration();
         }
 
-        processCommandLineCSVOptions(cli, overrideProperties);
+        processCommandLineExportOptions(cli, overrideProperties);
 
         return overrideProperties;
     }
 
-    private void processCommandLineCSVOptions(CommandLine cli, PropertiesConfiguration overrideProperties) {
+    private void processCommandLineExportOptions(CommandLine cli, PropertiesConfiguration overrideProperties) {
         if (cli.hasOption(CommandLineParam.COLUMNS_TO_WRITE.getLongName())) {
             overrideProperties.setProperty(DroidGlobalProperty.COLUMNS_TO_WRITE.getName(),
                     String.join(SPACE, cli.getOptionValues(CommandLineParam.COLUMNS_TO_WRITE.getLongName())));
         }
         if (cli.hasOption(CommandLineParam.QUOTE_COMMAS.getLongName())) {
             overrideProperties.setProperty(DroidGlobalProperty.QUOTE_ALL_FIELDS.getName(), false);
+        }
+        if (cli.hasOption(CommandLineParam.JSON_OUTPUT.getLongName())) {
+            overrideProperties.setProperty(DroidGlobalProperty.EXPORT_OUTPUT_OPTIONS.getName(), ExportOutputOptions.JSON_OUTPUT.name());
+        } else {
+            overrideProperties.setProperty(DroidGlobalProperty.EXPORT_OUTPUT_OPTIONS.getName(), ExportOutputOptions.CSV_OUTPUT.name());
         }
         if (cli.hasOption(CommandLineParam.ROW_PER_FORMAT.getLongName())) {
             overrideProperties.setProperty(DroidGlobalProperty.EXPORT_OPTIONS.getName(), ExportOptions.ONE_ROW_PER_FORMAT.name());

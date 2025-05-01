@@ -37,18 +37,19 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.gov.nationalarchives.droid.core.interfaces.filter.Filter;
 import uk.gov.nationalarchives.droid.export.interfaces.ExportOptions;
+import uk.gov.nationalarchives.droid.export.interfaces.ExportOutputOptions;
 
 /**
  * Base class for a profile.
@@ -168,7 +169,13 @@ public class ProfileInstance {
     private ExportOptions exportOptions;
 
     @XmlTransient
+    private ExportOutputOptions exportOutputOptions;
+
+    @XmlTransient
     private Set<ProfileEventListener> eventListeners = new HashSet<ProfileEventListener>();
+
+    @XmlTransient
+    private URI proxy;
 
     /**
      * Constructs a profile instance in a default state.
@@ -867,5 +874,29 @@ public class ProfileInstance {
      */
     public ExportOptions getExportOptions() {
         return exportOptions;
+    }
+
+    public URI getProxy() {
+        return proxy;
+    }
+
+    public void setProxy(URI proxy) {
+        this.proxy = proxy;
+    }
+
+    /**
+     * Sets the export output options - CSV or JSON.
+     * @param options the output options
+     */
+    public void setExportOutputOptions(ExportOutputOptions options) {
+        this.exportOutputOptions = options;
+    }
+
+    /**
+     *
+     * @return The export output options
+     */
+    public ExportOutputOptions getExportOutputOptions() {
+        return exportOutputOptions;
     }
 }

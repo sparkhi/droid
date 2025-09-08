@@ -4,7 +4,7 @@
     <parent>
         <artifactId>droid-parent</artifactId>
         <groupId>uk.gov.nationalarchives</groupId>
-        <version>6.9.0-RC2-SNAPSHOT</version>
+        <version>6.9.5-SNAPSHOT</version>
         <relativePath>../droid-parent</relativePath>
     </parent>
   
@@ -142,7 +142,7 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.18.0</version>
+            <version>1.19.0</version>
         </dependency>
         <dependency>
             <groupId>net.java.truevfs</groupId>
@@ -241,7 +241,7 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>ssooidc</artifactId>
-            <version>2.31.31</version>
+            <version>${aws.version}</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>

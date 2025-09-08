@@ -4,7 +4,7 @@
     <parent>
         <artifactId>droid-parent</artifactId>
         <groupId>uk.gov.nationalarchives</groupId>
-        <version>6.9.0-RC2-SNAPSHOT</version>
+        <version>6.9.5-SNAPSHOT</version>
         <relativePath>../droid-parent</relativePath>
     </parent>
   
@@ -169,7 +169,19 @@
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-openide-util</artifactId>
-            <version>RELEASE250</version>
+            <version>RELEASE260</version>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-swing</artifactId>
+            <version>3.17.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-swing-junit</artifactId>
+            <version>3.17.1</version>
+            <scope>test</scope>
         </dependency>
         <!--
             droid-swing-ui has hotfix of org-netbeans-swing-outline:org.netbeans.swing.outline.TreePathSupport
@@ -179,7 +191,7 @@
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-swing-outline</artifactId>
-            <version>RELEASE250</version>
+            <version>RELEASE260</version>
         </dependency>
         <dependency>
             <groupId>org.jdesktop</groupId>

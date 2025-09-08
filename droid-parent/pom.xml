@@ -1,29 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-  
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>9</version>
-        <relativePath />
-    </parent>
-  
+
     <groupId>uk.gov.nationalarchives</groupId>
     <artifactId>droid-parent</artifactId>
-    <version>6.9.0-RC2-SNAPSHOT</version>
+    <version>6.9.5-SNAPSHOT</version>
     <packaging>pom</packaging>
-  
+
     <name>droid-parent</name>
     <description>A tool developed by the UK National Archives to perform automated batch identification of file formats.</description>
     <url>http://digital-preservation.github.com/droid/</url>
     <inceptionYear>2016</inceptionYear>
-  
+
     <organization>
         <name>The National Archives</name>
         <url>http://www.nationalarchives.gov.uk</url>
     </organization>
-    
+
     <developers>
         <developer>
           <name>Graham Seaman</name>
@@ -58,8 +51,11 @@
         <developer>
             <name>Saurabh Parkhi</name>
         </developer>
+        <developer>
+            <name>Sam Palmer</name>
+        </developer>
     </developers>
-  
+
     <licenses>
         <license>
             <name>The BSD 3-Clause License</name>
@@ -67,47 +63,56 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
- 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://ossrh-staging-api.central.sonatype.com/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
     <scm>
         <connection>scm:git:https://github.com/digital-preservation/droid.git</connection>
         <developerConnection>scm:git:https://github.com/digital-preservation/droid.git</developerConnection>
         <url>scm:git:https://github.com/digital-preservation/droid.git</url>
       <tag>HEAD</tag>
   </scm>
-    
+
     <mailingLists>
         <mailingList>
             <name>droid-list</name>
             <archive>https://groups.google.com/forum/#!forum/droid-list</archive>
         </mailingList>
     </mailingLists>
-  
+
     <properties>
         <project.build.source>21</project.build.source>
         <project.build.target>21</project.build.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <project.email>pronom@nationalarchives.gov.uk</project.email>
-        <spring.version>6.2.6</spring.version>
+        <spring.version>6.2.9</spring.version>
         <hibernate.version>5.4.1.Final</hibernate.version>
         <derby.version>10.17.1.0</derby.version>
-        <cxf.version>4.1.1</cxf.version>
+        <cxf.version>4.1.3</cxf.version>
         <java.iso-tools.version>2.1.0</java.iso-tools.version>
         <jaxb.version>4.0.5</jaxb.version>
         <jakarta.version>4.0.2</jakarta.version>
-        <jackson.version>2.19.0</jackson.version>
+        <jackson.version>2.19.2</jackson.version>
         <flying-saucer.version>9.7.2</flying-saucer.version>
         <truevfs.version>0.14.0</truevfs.version>
         <jwat.version>1.1.3</jwat.version>
         <hamcrest.version>3.0</hamcrest.version>
         <slf4j.version>2.0.17</slf4j.version>
-        <log4j2.version>2.24.3</log4j2.version>
+        <log4j2.version>2.25.1</log4j2.version>
         <checkstyle.version>10.21.2</checkstyle.version>
-        <aws.version>2.31.31</aws.version>
-        <junit.version>5.12.2</junit.version>
-        <commons.version>2.19.0</commons.version>
+        <aws.version>2.32.6</aws.version>
+        <junit.version>5.13.4</junit.version>
+        <commons.version>2.20.0</commons.version>
     </properties>
-  
+
     <build>
         <pluginManagement>
             <plugins>
@@ -136,7 +141,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>3.6.0</version>
+                    <version>3.6.1</version>
                 </plugin>
                 <plugin>
                     <groupId>com.mycila</groupId>
@@ -210,7 +215,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <version>3.2.7</version>
+                    <version>3.2.8</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -237,8 +242,20 @@
                 </plugin>
             </plugins>
         </pluginManagement>
-        
+
         <plugins>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.7.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://ossrh-staging-api.central.sonatype.com/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                    <stagingProgressTimeoutMinutes>20</stagingProgressTimeoutMinutes>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -266,7 +283,7 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>12.1.1</version>
+                <version>12.1.3</version>
                 <configuration>
                     <failBuildOnCVSS>8</failBuildOnCVSS>
                 </configuration>
@@ -304,10 +321,14 @@
                         <exclude>**/resources/**</exclude>
                         <exclude>**/bin/</exclude>
                         <exclude>**/.github/**</exclude>
+                        <exclude>**/Dockerfile</exclude>
+                        <exclude>ui-test-startup.sh</exclude>
                         <exclude>pom.xml</exclude>
                         <exclude>**/pom.xml</exclude>
                         <exclude>header.txt</exclude>
                         <exclude>LICENSE</exclude>
+                        <exclude>/cli-tests/**</exclude>
+                        <exclude>/ui-tests/**</exclude>
                         <exclude>src-header.txt</exclude>
                         <exclude>**/test_sig_files/**</exclude>
                         <exclude>**/test-skeletons/**</exclude>
@@ -325,6 +346,7 @@
                         <exclude>*.GIF</exclude>
                         <exclude>*.PNG</exclude>
                         <exclude>**/suppressions.xml</exclude>
+                        <exclude>**/generate_search_index.py</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -375,7 +397,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <forkCount>1</forkCount>
+                    <reuseForks>true</reuseForks>
+                    <excludes>**/*SwingUiTest.java</excludes>
                     <argLine>@{jacocoArgLine} -Dfile.encoding=${project.build.sourceEncoding}</argLine>
+                    <argLine>--add-opens=java.base/java.util=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -429,9 +455,8 @@
                 <executions>
                     <execution>
                         <id>attach-sources</id>
-                        <phase>verify</phase>
                         <goals>
-                            <goal>jar</goal>
+                            <goal>jar-no-fork</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -440,11 +465,19 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <source>21</source>
                 </configuration>
             </plugin>
-<!-- N.B. sourceFileExcludes won't work till version 2.11 is released 
+<!-- N.B. sourceFileExcludes won't work till version 2.11 is released
             <plugin>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-javadoc-plugin</artifactId>
@@ -453,7 +486,7 @@
             <link>${project.url}</link>
             <link>${project.organization.url}</link>
         </links>
-                  
+
             <sourceFileExcludes>
                 <exclude>**/package-info.java</exclude>
             </sourceFileExcludes>
@@ -533,17 +566,10 @@ Copyright &copy; ${project.inceptionYear}-{currentYear} <a href="${project.organ
             </plugin>
         </plugins>
     </reporting>
-    
+
     <profiles>
         <profile>
           <id>release-sign-artifacts</id>
-          <activation>
-            <property>
-              <!-- performRelease will be true when mvn:release-perform is executed -->
-              <name>performRelease</name>
-              <value>true</value>
-            </property>
-          </activation>
           <build>
             <plugins>
               <plugin>
@@ -671,7 +697,7 @@ Copyright &copy; ${project.inceptionYear}-{currentYear} <a href="${project.organ
             <dependency>
                <groupId>org.apache.commons</groupId>
                <artifactId>commons-lang3</artifactId>
-               <version>3.17.0</version>
+               <version>3.18.0</version>
             </dependency>
             <dependency>
                 <groupId>commons-beanutils</groupId>
@@ -691,7 +717,7 @@ Copyright &copy; ${project.inceptionYear}-{currentYear} <a href="${project.organ
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-compress</artifactId>
-                <version>1.27.1</version>
+                <version>1.28.0</version>
             </dependency>
             <dependency>
                 <groupId>org.tukaani</groupId>
@@ -766,7 +792,7 @@ Copyright &copy; ${project.inceptionYear}-{currentYear} <a href="${project.organ
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>5.17.0</version>
+                <version>5.18.0</version>
             </dependency>
             <dependency>
                 <groupId>xmlunit</groupId>
@@ -821,7 +847,7 @@ Copyright &copy; ${project.inceptionYear}-{currentYear} <a href="${project.organ
     <pluginRepositories>
         <pluginRepository>
             <id>sonatype-releases</id>
-            <url>https://oss.sonatype.org/content/repositories/releases</url>
+            <url>https://ossrh-staging-api.central.sonatype.com/content/repositories/releases</url>
         </pluginRepository>
         <pluginRepository>
             <id>clojars.org</id>

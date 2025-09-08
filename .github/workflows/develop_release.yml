@@ -1,0 +1,40 @@
+name: Release to develop
+
+on:
+  push:
+    branches:
+      - develop
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Release to develop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: 21
+          distribution: temurin
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Maven Build
+        run: |
+          pip install requests beautifulsoup4
+          cd droid-help
+          python generate_search_index.py
+          cd ..
+          mvn -V -B package -DnvdApiKey=${{ secrets.NVD_API_KEY }}
+          python .github/scripts/generate_develop_release.py
+
+        env:
+          AWS_REGION: eu-west-2
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

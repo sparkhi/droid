@@ -4,7 +4,7 @@
     <parent>
         <artifactId>droid-parent</artifactId>
         <groupId>uk.gov.nationalarchives</groupId>
-        <version>6.9.0-RC2-SNAPSHOT</version>
+        <version>6.9.5-SNAPSHOT</version>
         <relativePath>droid-parent</relativePath>
     </parent>
 
@@ -50,11 +50,16 @@
                     <excludes>
                         <exclude>.idea/**</exclude>
                         <exclude>pom.xml</exclude>
+                        <exclude>/cli-tests/**</exclude>
+                        <exclude>/ui-tests/**</exclude>
                         <exclude>LICENSE</exclude>
                         <exclude>appveyor.yml</exclude>
                         <exclude>.gitattributes</exclude>
+                        <exclude>Dockerfile</exclude>
+                        <exclude>ui-test-startup.sh</exclude>
                         <exclude>.github/**</exclude>
                         <exclude>**/suppressions.xml</exclude>
+                        <exclude>**/generate_search_index.py</exclude>
                     </excludes>
                 </configuration>
             </plugin>
